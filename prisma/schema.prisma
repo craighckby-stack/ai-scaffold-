@@ -191,6 +191,7 @@ model DataPacket {
 model EncryptionKey {
   id          String   @id @default(cuid())
   publicKey   String
+  data        String   @default("")
   privateKey  String
   algorithm   String   @default("AES-256-GCM")
   created     Int
@@ -235,4 +236,10 @@ model CodebaseAnalysis {
   testCoverage      Float
   securityIssues    String
   createdAt        DateTime @default(now())
+}
+
+  usage       String
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+}
 }
