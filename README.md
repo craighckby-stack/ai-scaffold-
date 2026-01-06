@@ -25,3 +25,9 @@ Gemini
 https://gemini.google.com/share/cff3628bfc67
 
 tbc
+
+https://gemini.google.com/share/a0013ccc9e93
+
+
+lol
+https://gemini.google.com/share/249a6d6d4366
