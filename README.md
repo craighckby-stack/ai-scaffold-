@@ -13,3 +13,14 @@ idea. take as many stupid ai ideas build them half assed
 mash them together in a single scaffold to then point a builder to build a ai.
 
 I'll paste simple gemini demo's of different ideas.
+
+
+builder
+Z
+sign up point fullstack to repo and token and let it build or even better you can help enhance the code.
+
+Debugger because I'm lazy.
+Gemini 
+https://gemini.google.com/share/0bb5e52c096e
+
+tbc
