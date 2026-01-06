@@ -1,4 +1,4 @@
-import ZAI from 'z-ai-web-dev-sdk';
+import ZAI from '@/lib/sdk-mock';
 import { db } from '@/lib/db';
 
 export interface ImprovementCandidate {
@@ -256,7 +256,7 @@ Format as JSON:
         cycleNumber: this.currentCycle,
         constraintLevel: this.constraintLevel,
         success: result.success,
-        improvements: result.improvements,
+        improvements: JSON.stringify(result.improvements),
         newCode: result.newCode,
         performanceChange: result.performanceChange,
         confidence: result.confidence

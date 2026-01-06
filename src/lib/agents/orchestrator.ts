@@ -1,5 +1,4 @@
-import ZAI from 'z-ai-web-dev-sdk';
-import { db } from '@/lib/db';
+import MockZAI from '@/lib/sdk-mock';
 import { AGENT_REGISTRY, AgentConfig, AgentResult, SynthesisResult, Task } from './agent-registry';
 
 export class AgentOrchestrator {
@@ -11,7 +10,7 @@ export class AgentOrchestrator {
 
   private async initialize(): Promise<void> {
     if (!this.zai) {
-      this.zai = await ZAI.create();
+      this.zai = await MockZAI.create();
     }
   }
 
@@ -21,8 +20,6 @@ export class AgentOrchestrator {
     const selectedAgents = this.selectAgents(task);
     const results = await this.executeParallel(selectedAgents, task);
     const synthesized = await this.synthesizeResults(results, task);
-
-    await this.storeResults(task, results, synthesized);
 
     return synthesized;
   }
@@ -91,8 +88,7 @@ export class AgentOrchestrator {
     const startTime = Date.now();
 
     try {
-      const prompt = this.createAgentPrompt(agent, task);
-      const response = await this.callLLM(prompt);
+      const response = await this.callLLM(agent, task);
 
       const duration = Date.now() - startTime;
 
@@ -104,8 +100,6 @@ export class AgentOrchestrator {
         duration,
         errors: []
       };
-
-      await this.storeAgentTask(result, task);
 
       return result;
     } catch (error: any) {
@@ -120,12 +114,10 @@ export class AgentOrchestrator {
     }
   }
 
-  private createAgentPrompt(agent: AgentConfig, task: Task): string {
-    return `You are ${agent.name}, a specialized ${agent.domain} expert with expertise in: ${agent.expertise.join(', ')}.
+  private async callLLM(agent: AgentConfig, task: Task): Promise<any> {
+    const prompt = `You are ${agent.name}, a specialized ${agent.domain} expert with expertise in: ${agent.expertise.join(', ')}.
 
 Your task: ${task.query}
-
-Capabilities: ${agent.capabilities.join(', ')}
 
 Provide:
 1. Your analysis based on your expertise
@@ -138,47 +130,35 @@ Format as JSON:
   "reasoning": "your reasoning",
   "confidence": 0.0
 }`;
-  }
 
-  private async callLLM(prompt: string): Promise<any> {
+    const response = await this.zai.chat.completions.create({
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a helpful AI assistant.'
+        },
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      thinking: { type: 'disabled' }
+    });
+
+    const text = response.choices[0]?.message?.content || '';
+
     try {
-      const response = await this.zai.chat.completions.create({
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a helpful AI assistant.'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        thinking: { type: 'disabled' }
-      });
-
-      const text = response.choices[0]?.message?.content || '';
-
-      // Try to parse JSON response
-      try {
-        const parsed = JSON.parse(text);
-        return {
-          text: parsed.text || text,
-          reasoning: parsed.reasoning || '',
-          confidence: parsed.confidence || 0.5
-        };
-      } catch {
-        return {
-          text: text,
-          reasoning: '',
-          confidence: 0.5
-        };
-      }
-    } catch (error: any) {
-      console.error('LLM call error:', error);
+      const parsed = JSON.parse(text);
       return {
-        text: 'Error: Unable to process request',
+        text: parsed.text || text,
+        reasoning: parsed.reasoning || '',
+        confidence: parsed.confidence || 0.5
+      };
+    } catch {
+      return {
+        text: text,
         reasoning: '',
-        confidence: 0.0
+        confidence: 0.5
       };
     }
   }
@@ -193,7 +173,7 @@ Format as JSON:
       throw new Error('All agents failed');
     }
 
-    const synthesisPrompt = `Synthesize the following agent responses into a coherent answer:
+    const synthesisPrompt = `Synthesize following agent responses into a coherent answer:
 
 ${successful.map(r => `- ${r.agentId}: ${r.response}`).join('\n')}
 
@@ -204,68 +184,25 @@ Provide:
 2. Key insights from each agent
 3. Overall confidence (0.0 to 1.0)`;
 
-    const response = await this.callLLM(synthesisPrompt);
+    const response = await this.zai.chat.completions.create({
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a helpful AI assistant.'
+        },
+        {
+          role: 'user',
+          content: synthesisPrompt
+        }
+      ],
+      thinking: { type: 'disabled' }
+    });
 
     return {
       queryId: task.id,
       agentResults: results,
-      synthesizedOutput: response.text,
-      confidence: response.confidence || 0.5
+      synthesizedOutput: response.choices[0]?.message?.content || '',
+      confidence: 0.8
     };
-  }
-
-  private async storeResults(
-    task: Task,
-    results: AgentResult[],
-    synthesized: SynthesisResult
-  ): Promise<void> {
-    await db.synthesisResult.create({
-      data: {
-        queryId: task.id,
-        agentResults: results,
-        synthesizedOutput: synthesized.synthesizedOutput,
-        confidence: synthesized.confidence
-      }
-    });
-
-    for (const result of results) {
-      await db.agentTask.create({
-        data: {
-          taskId: task.id,
-          agentId: result.agentId,
-          task: {
-            query: task.query,
-            domain: task.domain,
-            priority: task.priority,
-            timestamp: task.timestamp
-          },
-          response: result.response,
-          confidence: result.confidence,
-          reasoning: result.reasoning,
-          duration: result.duration,
-          errors: result.errors
-        }
-      });
-    }
-  }
-
-  private async storeAgentTask(result: AgentResult, task: Task): Promise<void> {
-    await db.agentTask.create({
-      data: {
-        taskId: task.id,
-        agentId: result.agentId,
-        task: {
-          query: task.query,
-          domain: task.domain,
-          priority: task.priority,
-          timestamp: task.timestamp
-        },
-        response: result.response,
-        confidence: result.confidence,
-        reasoning: result.reasoning,
-        duration: result.duration,
-        errors: result.errors
-      }
-    });
   }
 }

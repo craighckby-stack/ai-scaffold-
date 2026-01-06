@@ -107,7 +107,7 @@ async function handleProcess(data: { binary: string; unitType: string }) {
     data: {
       packetType: 'INPUT',
       source: 'PROCESSOR',
-      payload: result,
+      payload: JSON.stringify(result),
       size: data.binary.length,
       checksum: result.success ? 'valid' : 'invalid',
       processed: result.success,

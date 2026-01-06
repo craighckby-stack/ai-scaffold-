@@ -1,3 +1,8 @@
+export interface ConstraintCheck {
+  passed: boolean;
+  violations: string[];
+}
+
 export interface SensoryConstraints {
   maxInputSize: number;
   maxContextWindow: number;
@@ -76,7 +81,7 @@ export class ConstraintEngine {
 
     const structuralResult = this.applyStructuralConstraints(input);
     if (!structuralResult.passed) {
-      result.warnings.push(...structuralResult.warnings);
+      result.warnings.push(...structuralResult.violations);
     }
 
     const interpretiveResult = this.applyInterpretiveConstraints(input);
