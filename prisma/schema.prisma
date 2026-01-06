@@ -188,56 +188,6 @@ model DataPacket {
   processedAt DateTime?
 }
 
-model EncryptionKey {
-  id          String   @id @default(cuid())
-  publicKey   String
-  data        String   @default("")
-  privateKey  String
-  algorithm   String   @default("AES-256-GCM")
-  created     Int
-  expires     Int
-  usage       String
-  active      Boolean  @default(true)
-  createdAt   DateTime @default(now())
-}
-
-model EncryptedPacket {
-  id          String   @id @default(cuid())
-  data        String   
-  iv          String
-  tag         String
-  keyId       String
-  timestamp   Int
-  createdAt   DateTime @default(now())
-}
-
-// ========================================
-// LEARNING LAYER (I.J. Good)
-// ========================================
-
-model ImprovementCycle {
-  id              String   @id @default(cuid())
-  cycleNumber     Int      @unique
-  constraintLevel Float    @default(1.0)
-  success         Boolean
-  improvements    String
-  newCode         String   
-  performanceChange Float
-  confidence      Float
-  createdAt       DateTime @default(now())
-}
-
-model CodebaseAnalysis {
-model EncryptionKey {
-  id          String   @id @default(cuid())
-  data        String   @default("")
-  publicKey   String
-  privateKey  String
-  algorithm   String   @default("AES-256-GCM")
-  created     Int
-  expires     Int
-  usage       String
-  active      Boolean  @default(true)
   createdAt   DateTime @default(now())
 }
 
