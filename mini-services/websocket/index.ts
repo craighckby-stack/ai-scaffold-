@@ -14,7 +14,8 @@ const io = new Server(httpServer, {
 });
 
 io.on('connection', (socket) => {
-  console.log(`ðŸ“¡ Client connected: ${socket.id}`);
+  // FIX 1: Cleaned up mangled emoji logging
+  console.log(`✅ Client connected: ${socket.id}`); 
 
   // Join default rooms
   socket.join('metrics');
@@ -44,8 +45,8 @@ io.on('connection', (socket) => {
 
   // Reasoning room
   socket.on('join-reasoning', () => {
-    socket.join('reasoning'); // FIX: Corrected typo from 'reasioning'
-    socket.emit('joined-reasoning', { room: 'reasoning' }); // FIX: Corrected typo
+    socket.join('reasoning'); 
+    socket.emit('joined-reasoning', { room: 'reasoning' }); 
   });
 
   // Memory room
@@ -70,7 +71,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('broadcast-reasoning', (data) => {
-    socket.to('reasoning').emit('reasoning-update', data); // FIX: Corrected room ('reasoning') and emitted event name ('reasoning-update')
+    socket.to('reasoning').emit('reasoning-update', data); 
   });
 
   socket.on('broadcast-memory', (data) => {
@@ -80,17 +81,21 @@ io.on('connection', (socket) => {
   socket.on('broadcast-security', (data) => {
     socket.to('security').emit('security-update', data);
   });
+
+  // FIX 2: Correctly handle client disconnection on the individual socket instance
+  socket.on('disconnect', () => {
+    console.log(`❌ Client disconnected: ${socket.id}`);
+  });
 });
 
-io.on('disconnect', (socket) => {
-  console.log(`ðŸ“¡ Client disconnected: ${socket.id}`);
-});
+// Removed incorrect global io.on('disconnect', ...) listener
 
 const PORT = process.env.WEBSOCKET_PORT || 3003;
 
 httpServer.listen(PORT, () => {
-  console.log(`ðŸš€ WebSocket service running on port ${PORT}`);
-  console.log(`ðŸ“¡ Connected clients: ${io.engine.clientsCount}`);
+  // FIX 3: Cleaned up mangled emoji logging
+  console.log(`🚀 WebSocket service running on port ${PORT}`); 
+  console.log(`✅ Connected clients: ${io.engine.clientsCount}`);
 });
 
 export { io, httpServer };
