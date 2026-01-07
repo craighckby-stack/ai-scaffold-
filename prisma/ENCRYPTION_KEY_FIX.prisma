@@ -1,10 +1,10 @@
+model
 model EncryptionKey {
   id          String   @id @default(cuid())
-  data        String   @default("")  // Store encrypted data as JSON string
+  data        String   @default("")
   publicKey   String
   privateKey  String
   algorithm   String   @default("AES-256-GCM")
-  created     Int
   expires     Int
   usage       String
   active      Boolean  @default(true)
