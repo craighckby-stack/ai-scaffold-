@@ -1,34 +1,34 @@
-# Dependencies
 node_modules/
 .pnp
 .pnp.js
-
-# Testing
-coverage/
-*.log
-
-# Next.js
 .next/
 out/
 build/
 dist/
+coverage/
 
-# Production
-*.production.js
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# Misc
-.DS_Store
-*.pem
-
-# Environment
+# Environment and Secrets
 .env
 .env*.local
+*.production.js
+*.pem
 
 # Database
 *.db
 *.db-journal
-*.sqlite
-*.sqlite3
+*.sqlite*
+
+# Temporary
+tmp/
+temp/
+*.tmp
 
 # IDE
 .vscode/
@@ -37,21 +37,9 @@ dist/
 *.swo
 *~
 
-# OS
+# OS/Misc
+.DS_Store
 Thumbs.db
 
-# Logs
-logs/
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-yarn-error.log*
-
-# Temporary files
-tmp/
-temp/
-*.tmp
-
-# Skills directory (excluded from build)
+# Project Exclusions
 skills/
