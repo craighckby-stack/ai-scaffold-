@@ -1,17 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
   xmlns="urn:schemas-microsoft-com:office:word"
-  targetNamespace="urn:schemas-microsoft-com:office:word" elementFormDefault="qualified"
+  targetNamespace="urn:schemas-microsoft-com:office:word"
+  elementFormDefault="qualified"
   attributeFormDefault="unqualified">
+  
   <xsd:element name="bordertop" type="CT_Border"/>
   <xsd:element name="borderleft" type="CT_Border"/>
   <xsd:element name="borderright" type="CT_Border"/>
   <xsd:element name="borderbottom" type="CT_Border"/>
+  
   <xsd:complexType name="CT_Border">
     <xsd:attribute name="type" type="ST_BorderType" use="optional"/>
     <xsd:attribute name="width" type="xsd:positiveInteger" use="optional"/>
     <xsd:attribute name="shadow" type="ST_BorderShadow" use="optional"/>
   </xsd:complexType>
+  
   <xsd:element name="wrap" type="CT_Wrap"/>
   <xsd:complexType name="CT_Wrap">
     <xsd:attribute name="type" type="ST_WrapType" use="optional"/>
@@ -19,8 +23,10 @@
     <xsd:attribute name="anchorx" type="ST_HorizontalAnchor" use="optional"/>
     <xsd:attribute name="anchory" type="ST_VerticalAnchor" use="optional"/>
   </xsd:complexType>
+  
   <xsd:element name="anchorlock" type="CT_AnchorLock"/>
   <xsd:complexType name="CT_AnchorLock"/>
+  
   <xsd:simpleType name="ST_BorderType">
     <xsd:restriction base="xsd:string">
       <xsd:enumeration value="none"/>
@@ -52,6 +58,7 @@
       <xsd:enumeration value="HTMLInset"/>
     </xsd:restriction>
   </xsd:simpleType>
+  
   <xsd:simpleType name="ST_BorderShadow">
     <xsd:restriction base="xsd:string">
       <xsd:enumeration value="t"/>
@@ -60,6 +67,7 @@
       <xsd:enumeration value="false"/>
     </xsd:restriction>
   </xsd:simpleType>
+  
   <xsd:simpleType name="ST_WrapType">
     <xsd:restriction base="xsd:string">
       <xsd:enumeration value="topAndBottom"/>
@@ -69,6 +77,7 @@
       <xsd:enumeration value="through"/>
     </xsd:restriction>
   </xsd:simpleType>
+  
   <xsd:simpleType name="ST_WrapSide">
     <xsd:restriction base="xsd:string">
       <xsd:enumeration value="both"/>
@@ -77,6 +86,7 @@
       <xsd:enumeration value="largest"/>
     </xsd:restriction>
   </xsd:simpleType>
+  
   <xsd:simpleType name="ST_HorizontalAnchor">
     <xsd:restriction base="xsd:string">
       <xsd:enumeration value="margin"/>
@@ -85,6 +95,7 @@
       <xsd:enumeration value="char"/>
     </xsd:restriction>
   </xsd:simpleType>
+  
   <xsd:simpleType name="ST_VerticalAnchor">
     <xsd:restriction base="xsd:string">
       <xsd:enumeration value="margin"/>
