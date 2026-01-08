@@ -4,10 +4,13 @@ model EncryptionKey {
   privateKey  String
   data        String    @default("")
   algorithm   String    @default("AES-256-GCM")
-  created     Int
-  expires     Int
+  created     BigInt
+  expires     BigInt
   usage       String
   active      Boolean   @default(true)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+
+  @@index([active])
+  @@index([usage, active])
 }
