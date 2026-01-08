@@ -80,13 +80,15 @@ z-ai chat \
 
 ### Simple Question and Answer
 
+To ensure performance, initialize the `ZAI` instance once and reuse it.
+
 ```javascript
 import ZAI from 'z-ai-web-dev-sdk';
 
-// NOTE: For performance, reuse the ZAI instance if possible.
-async function askQuestion(question, systemPrompt = 'You are a helpful assistant.') {
-  const zai = await ZAI.create();
+// Initialize the SDK instance once for reuse across multiple calls
+const zai = await ZAI.create();
 
+async function askQuestion(question, systemPrompt = 'You are a helpful assistant.') {
   const completion = await zai.chat.completions.create({
     messages: [
       // NOTE: Use 'assistant' role for the system/context message
@@ -116,7 +118,7 @@ console.log('Code Review:', codeReview);
 
 ### Conversation History Management Class
 
-This class manages the conversation state, ensuring context is passed in every request.
+This class manages the conversation state, ensuring context is passed in every request while reusing the `ZAI` instance.
 
 ```javascript
 import ZAI from 'z-ai-web-dev-sdk';
@@ -130,7 +132,8 @@ class ConversationManager {
   }
 
   async initialize() {
-    this.zai = await ZAI.create(); // Initialize SDK instance once
+    // Initialize SDK instance once and store it
+    this.zai = await ZAI.create(); 
   }
 
   async sendMessage(userMessage) {
@@ -160,7 +163,7 @@ class ConversationManager {
   }
 
   getHistory() {
-    // Exclude the initial system prompt from the count
+    // Exclude the initial system prompt (index 0) from the visible history
     return this.messages.slice(1); 
   }
 
@@ -207,8 +210,8 @@ class ContentGenerator {
     this.zai = await ZAI.create();
   }
   
-  async generate(task, systemRole, userPrompt) {
-    if (!this.zai) throw new Error('Generator not initialized.');
+  async generate(systemRole, userPrompt) {
+    if (!this.zai) throw new Error('Generator not initialized. Call initialize() first.');
 
     const completion = await this.zai.chat.completions.create({
       messages: [
@@ -222,7 +225,6 @@ class ContentGenerator {
 
   async generateBlogPost(topic, tone = 'professional') {
     return this.generate(
-      'Blog Post',
       `You are a professional content writer. Write in a ${tone} tone.`,
       `Write a detailed blog post about: ${topic}. Include an introduction, main points, and conclusion.`
     );
@@ -230,7 +232,6 @@ class ContentGenerator {
 
   async generateProductDescription(productName, features) {
     return this.generate(
-      'Product Description',
       'You are an expert at writing compelling product descriptions for e-commerce.',
       `Write a product description for "${productName}". Key features: ${features.join(', ')}.`
     );
@@ -253,8 +254,9 @@ console.log('Blog Post:', blogPost.substring(0, 100) + '...');
 ```javascript
 import ZAI from 'z-ai-web-dev-sdk';
 
-async function analyzeData(data, analysisType) {
-  const zai = await ZAI.create();
+// Function accepts pre-initialized ZAI instance for efficiency
+async function analyzeData(zai, data, analysisType) {
+  if (!zai) throw new Error('ZAI instance is required.');
 
   const prompts = {
     summarize: 'You are a data analyst. Summarize the key insights from the data.',
@@ -275,6 +277,9 @@ async function analyzeData(data, analysisType) {
   return completion.choices[0]?.message?.content;
 }
 
+// Setup
+const zaiData = await ZAI.create();
+
 // Usage
 const salesData = {
   Q1: { revenue: 100000, customers: 250 },
@@ -283,7 +288,7 @@ const salesData = {
   Q4: { revenue: 180000, customers: 380 }
 };
 
-const trends = await analyzeData(salesData, 'trend');
+const trends = await analyzeData(zaiData, salesData, 'trend');
 console.log('Trends:', trends);
 ```
 
@@ -302,6 +307,8 @@ class CodeAssistant {
   }
 
   async generateCode(description, language) {
+    if (!this.zai) throw new Error('CodeAssistant not initialized.');
+
     return this.zai.chat.completions.create({
       messages: [
         {
@@ -318,6 +325,8 @@ class CodeAssistant {
   }
 
   async debugCode(code, issue) {
+    if (!this.zai) throw new Error('CodeAssistant not initialized.');
+
     return this.zai.chat.completions.create({
       messages: [
         {
@@ -352,11 +361,15 @@ console.log('Debug Suggestion:', bugFix);
 Focus on specific goals, format, and audience in the system prompt and user message.
 
 ```javascript
+import ZAI from 'z-ai-web-dev-sdk';
+
+// Initialize instance outside the function for performance
+const zaiInstance = await ZAI.create();
+
 // Good: Specific and structured prompt for clear output
 async function askWithContext(topic, format, audience) {
-  const zai = await ZAI.create();
   
-  const completion = await zai.chat.completions.create({
+  const completion = await zaiInstance.chat.completions.create({
     messages: [
       {
         role: 'assistant',
@@ -379,14 +392,23 @@ console.log(goodResponse);
 
 ### 2. Robust Error Handling and Retries
 
-Implement exponential backoff for network or rate-limiting errors.
+Implement exponential backoff for network or rate-limiting errors. The initialized `ZAI` instance must be passed into the function.
 
 ```javascript
 import ZAI from 'z-ai-web-dev-sdk';
 
-async function safeCompletion(messages, retries = 3) {
+/**
+ * Attempts chat completion with retry logic.
+ * @param {object} zai - Initialized ZAI SDK instance.
+ * @param {Array} messages - Message history.
+ * @param {number} retries - Max number of attempts.
+ */
+async function safeCompletion(zai, messages, retries = 3) {
   let lastError;
-  const zai = await ZAI.create(); // Create instance outside the loop if possible
+
+  if (!zai) {
+    return { success: false, error: 'ZAI instance not provided.', attempts: 0 };
+  }
 
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
@@ -413,7 +435,7 @@ async function safeCompletion(messages, retries = 3) {
     }
   }
 
-  return { success: false, error: lastError.message, attempts: retries };
+  return { success: false, error: lastError?.message || 'Unknown error occurred.', attempts: retries };
 }
 ```
 
@@ -433,18 +455,23 @@ class ManagedConversation {
   async initialize(systemPrompt) {
     this.zai = await ZAI.create();
     this.systemPrompt = systemPrompt;
-    this.messages = [{ role: 'assistant', content: systemPrompt }];
+    // System prompt always at index 0
+    this.messages = [{ role: 'assistant', content: systemPrompt }]; 
   }
 
   async chat(userMessage) {
+    if (!this.zai) throw new Error('ManagedConversation not initialized.');
+
     // 1. Add user message
     this.messages.push({ role: 'user', content: userMessage });
 
-    // 2. Trim old messages if exceeding limit (Keep system prompt always at index 0)
+    // 2. Trim old messages if exceeding limit
+    // We keep the system prompt (index 0) + (maxMessages - 1) most recent turns.
     if (this.messages.length > this.maxMessages) {
+      const systemMessage = this.messages[0];
       this.messages = [
-        this.messages[0], 
-        ...this.messages.slice(-(this.maxMessages - 1)) // Keep the (maxMessages - 1) most recent turns
+        systemMessage, 
+        ...this.messages.slice(-(this.maxMessages - 1))
       ];
     }
 
@@ -535,7 +562,8 @@ const conversations = new Map();
 let zaiInstance; // Reusable SDK instance
 
 async function initZAI() {
-  zaiInstance = await ZAI.create();
+  // Initialize the persistent SDK instance
+  zaiInstance = await ZAI.create(); 
 }
 
 app.post('/api/chat', async (req, res) => {
@@ -564,7 +592,8 @@ app.post('/api/chat', async (req, res) => {
     // Add user message
     history.push({ role: 'user', content: message });
 
-    // Ensure context trimming is applied here for production (See Best Practices 3)
+    // NOTE: Context trimming should be implemented here for production robustness
+    // Example: history = [history[0], ...history.slice(-20)] 
 
     // Get completion
     const completion = await zaiInstance.chat.completions.create({
@@ -593,14 +622,22 @@ app.post('/api/chat', async (req, res) => {
 
 app.delete('/api/chat/:sessionId', (req, res) => {
   const { sessionId } = req.params;
-  conversations.delete(sessionId);
-  res.json({ success: true, message: `Conversation ${sessionId} cleared` });
+  const wasDeleted = conversations.delete(sessionId);
+  
+  if (wasDeleted) {
+    res.json({ success: true, message: `Conversation ${sessionId} cleared` });
+  } else {
+    res.status(404).json({ success: false, message: `Conversation ${sessionId} not found` });
+  }
 });
 
 initZAI().then(() => {
   app.listen(3000, () => {
     console.log('Chatbot API running on port 3000');
   });
+}).catch(err => {
+  console.error('Failed to initialize ZAI SDK:', err);
+  process.exit(1);
 });
 ```
 
@@ -608,7 +645,7 @@ initZAI().then(() => {
 
 | Aspect | Tip | Rationale |
 | :--- | :--- | :--- |
-| **Performance** | **Reuse SDK Instance**: Create `ZAI.create()` once. | Avoids unnecessary initialization overhead per request. |
+| **Performance** | **Reuse SDK Instance**: Create `ZAI.create()` once at startup. | Avoids unnecessary initialization overhead and connection establishment per request. |
 | **Performance** | **Context Trimming**: Limit `messages` array size. | Reduces API latency and avoids token limits/high costs. |
 | **Performance** | **Specific Prompts**: Use clear, concise system prompts. | Improves model efficiency and response quality. |
 | **Reliability** | **Error Handling**: Implement retry logic with exponential backoff. | Gracefully handles transient network or rate-limiting errors. |
