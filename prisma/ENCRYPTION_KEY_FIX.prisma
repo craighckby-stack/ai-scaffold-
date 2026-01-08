@@ -1,8 +1,7 @@
-model
-model EncryptionKey {
+modelEncryptionKey {
   id          String   @id @default(cuid())
-  data        String   @default("")
-  publicKey   String
+  data        String
+  publicKey   String   @unique
   privateKey  String
   algorithm   String   @default("AES-256-GCM")
   expires     Int
