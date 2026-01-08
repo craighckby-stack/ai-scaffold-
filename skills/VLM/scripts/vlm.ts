@@ -5,15 +5,13 @@ async function main() {
     const prompt = promptParts.join(' ').trim();
 
     if (!imageUrl || !prompt) {
-        console.error('ERROR: Both image URL and prompt are required.');
-        console.log('Usage: node vlm.js <image_url> "Your prompt here"');
+        console.error('ERROR: Both image URL and prompt are required.\nUsage: node vlm.js <image_url> "Your prompt here"');
         process.exit(1);
     }
 
 	try {
 		const zai = await ZAI.create();
-
-        // Optimized instruction moved into the user prompt
+        
         const combinedPrompt = `Output only text, no markdown. Be concise. Analyze the provided content. QUERY: ${prompt}`;
 
 		const messages: VisionMessage[] = [{
@@ -32,15 +30,15 @@ async function main() {
 
 		const reply = response.choices?.[0]?.message?.content?.trim();
 		
-        if (reply) {
-		    console.log(reply);
-        } else {
+        if (!reply) {
             console.error('FATAL: No reply content received.');
             process.exit(1);
         }
+        
+        console.log(reply);
 
 	} catch (err: any) {
-		console.error('FATAL Vision Chat Failure:', err instanceof Error ? err.message : err);
+		console.error('FATAL Vision Chat Failure:', err instanceof Error ? err.message : String(err));
         process.exit(1);
 	}
 }
