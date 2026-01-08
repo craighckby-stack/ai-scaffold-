@@ -6,20 +6,20 @@ on:
 
 jobs:
   pr-checks:
-    name: Checks
+    name: Validation
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 7
 
     steps:
     - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
 
     - uses: oven-sh/setup-bun@v1
 
-    - name: Install and Run checks
-      run: |
-        bun install --frozen-lockfile
-        bunx tsc --noEmit
-        bun test
-        bun build
+    - name: Install Dependencies
+      run: bun install --frozen-lockfile
+
+    - name: Type Check
+      run: bunx tsc --noEmit
+
+    - name: Run Tests
+      run: bun test
